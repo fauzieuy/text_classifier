@@ -139,7 +139,7 @@ class TextClassifier:
 
         # questions = db.questions.find().limit( 100 )
         questions = db.questions.find({ '_type': 'Core::Question' })
-        questions = db.questions.find({ '_type': 'Core::Question', 'interest': { '$exists': False } })
+        #questions = db.questions.find({ '_type': 'Core::Question', 'interest': { '$exists': False } })
         for question in questions:
             text = question['title'] +' '+ question['content']
             print(text)
