@@ -58,7 +58,7 @@ class TextClassifier:
         index = []
         self.vocabs[classification] = []
         for file_name, text in self.__read_files(path):
-            rows.append({'text': text, 'class': classification})
+            rows.append({'text': clean_str(text), 'class': classification})
             index.append(file_name)
             self.vocabs[classification] += text.split(' ')
 
