@@ -4,7 +4,7 @@ import os
 from tensorflow.contrib import learn
 from com.alodokter import data_helpers
 
-# ==================================================
+# ===============================================================================================================
 tf.flags.DEFINE_string("checkpoint_dir", "runs/1501761743/checkpoints", "Checkpoint directory from training run")
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
@@ -15,6 +15,7 @@ print("\nParameters:")
 for attr, value in sorted(FLAGS.__flags.items()):
     print("{}={}".format(attr.upper(), value))
 print("")
+# ===============================================================================================================
 
 class TextClassifier:
     def __init__(self):
@@ -24,8 +25,6 @@ class TextClassifier:
         vocab_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
         self.vocab_processor = learn.preprocessing.VocabularyProcessor.restore(vocab_path)
 
-        # Prediction
-        # ==================================================
         checkpoint_file = tf.train.latest_checkpoint(FLAGS.checkpoint_dir)
         graph = tf.Graph()
         with graph.as_default():
@@ -41,8 +40,6 @@ class TextClassifier:
                 # Get the placeholders from the graph by name
                 self.input_x = graph.get_operation_by_name("input_x").outputs[0]
                 self.dropout_keep_prob = graph.get_operation_by_name("dropout_keep_prob").outputs[0]
-
-                # Tensors we want to evaluate
                 self.predictions = graph.get_operation_by_name("output/predictions").outputs[0]
 
     def predict(self, text):
