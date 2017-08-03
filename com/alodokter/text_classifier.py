@@ -34,6 +34,26 @@ class TextClassifier:
         self.y_test = None
         self.vocabs = {}
 
+    def __clean_str(self, string):
+        """
+        Tokenization/string cleaning for all datasets except for SST.
+        Original taken from https://github.com/yoonkim/CNN_sentence/blob/master/process_data.py
+        """
+        string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)
+        string = re.sub(r"\'s", " \'s", string)
+        string = re.sub(r"\'ve", " \'ve", string)
+        string = re.sub(r"n\'t", " n\'t", string)
+        string = re.sub(r"\'re", " \'re", string)
+        string = re.sub(r"\'d", " \'d", string)
+        string = re.sub(r"\'ll", " \'ll", string)
+        string = re.sub(r",", " ", string)
+        string = re.sub(r"!", " ! ", string)
+        string = re.sub(r"\(", " ( ", string)
+        string = re.sub(r"\)", " ) ", string)
+        string = re.sub(r"\?", " ? ", string)
+        string = re.sub(r"\s{2,}", " ", string)
+        return string.strip().lower()
+
     '" read training files "'
     def __read_files(self, path):
         print('processing path: '+ path)
@@ -58,7 +78,7 @@ class TextClassifier:
         index = []
         self.vocabs[classification] = []
         for file_name, text in self.__read_files(path):
-            rows.append({'text': clean_str(text), 'class': classification})
+            rows.append({'text': self.__clean_str(text), 'class': classification})
             index.append(file_name)
             self.vocabs[classification] += text.split(' ')
 
