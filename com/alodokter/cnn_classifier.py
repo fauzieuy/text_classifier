@@ -46,6 +46,6 @@ class TextClassifier:
                 self.predictions = graph.get_operation_by_name("output/predictions").outputs[0]
 
     def predict(self, text):
-        x = np.array(list(self.vocab_processor.transform([text])))
+        x = np.array(list(self.vocab_processor.transform([data_helpers.clean_str(text)])))
         output = self.sess.run(self.predictions, {self.input_x: x, self.dropout_keep_prob: 1.0})
         return data_helpers.get_class_name(output[0])

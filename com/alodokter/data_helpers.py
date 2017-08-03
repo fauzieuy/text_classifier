@@ -13,7 +13,7 @@ SKIP_FILES  = {'cmds'}
 
 le, bin_enc = None, None
 
-def __clean_str(string):
+def clean_str(string):
     """
     Tokenization/string cleaning for all datasets except for SST.
     Original taken from https://github.com/yoonkim/CNN_sentence/blob/master/process_data.py
@@ -60,29 +60,11 @@ def __build_data_frame(path, classification):
     rows  = []
     index = []
     for file_name, text in __read_files(path):
-        rows.append({'text': __clean_str(text.strip()), 'class': __one_hot_encoder(classification).tolist()[0]})
+        rows.append({'text': clean_str(text.strip()), 'class': __one_hot_encoder(classification).tolist()[0]})
         index.append(file_name)
 
     data_frame = DataFrame(rows, index=index)
     return data_frame
-
-# def __setup_one_hot_encoder_class(path):
-#     print('setup_one_hot_encoder_class...')
-#     classification = []
-#     for root, dir_names, file_names in os.walk(path):
-#         for dir_name in dir_names:
-#             print('append dir_name: '+ dir_name)
-#             classification.append(dir_name)
-#
-#     # integer encoded
-#     global le, bin_enc
-#     le = LabelEncoder()
-#     int_enc = le.fit_transform(classification)
-#     int_enc = int_enc.reshape(len(int_enc), 1) # reshape to avoid DeprecationWarning
-#
-#     # binary encode
-#     bin_enc = OneHotEncoder(sparse=False)
-#     bin_enc.fit(int_enc)
 
 def setup_one_hot_encoder_class(path):
     print('setup_one_hot_encoder_class...')
