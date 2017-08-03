@@ -100,7 +100,7 @@ def __prepare_data(path):
 
 def load_data_and_labels(path):
     data = __prepare_data(path)
-    return data['text'].tolist(), data['class'].tolist()
+    return data['text'].tolist(), np.array(data['class'].tolist())
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
     """

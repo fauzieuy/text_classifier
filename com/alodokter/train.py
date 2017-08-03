@@ -66,6 +66,10 @@ print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
 # Training
 # ==================================================
 with tf.Graph().as_default():
+    """
+    The allow_soft_placement setting allows TensorFlow to fall back on a device with a certain operation implemented when the preferred device doesn’t exist. For example, if our code places an operation on a GPU and we run the code on a machine without GPU, not using allow_soft_placement would result in an error. If log_device_placement is set, TensorFlow log on which devices (CPU or GPU) it places operations. That’s useful for debugging. FLAGS are command-line arguments to our program.
+    http://www.wildml.com/2015/12/implementing-a-cnn-for-text-classification-in-tensorflow/
+    """
     session_conf = tf.ConfigProto(allow_soft_placement=FLAGS.allow_soft_placement,log_device_placement=FLAGS.log_device_placement)
     sess = tf.Session(config=session_conf)
     with sess.as_default():

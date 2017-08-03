@@ -37,6 +37,9 @@ class TextClassifierCNN:
                 h = tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
 
                 # Maxpooling over the outputs
+                # ksize ==> Nout = (Nin + 2 * Npadding - Nfilter) + 1
+                # see http://www.wildml.com/2015/11/understanding-convolutional-neural-networks-for-nlp/
+                # Narrow vs. Wide convolution
                 pooled = tf.nn.max_pool(
                         h,
                         ksize=[1, sequence_length - filter_size + 1, 1, 1],
