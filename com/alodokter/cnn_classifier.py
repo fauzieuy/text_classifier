@@ -46,3 +46,17 @@ class TextClassifier:
         x = np.array(list(self.vocab_processor.transform([data_helpers.clean_str(text)])))
         output = self.sess.run(self.predictions, {self.input_x: x, self.dropout_keep_prob: 1.0})
         return data_helpers.get_class_name(output[0])
+
+    def tagging(self):
+        client = MongoClient('[server ip]', 27017)
+        db = client.alomobile
+        client.alomobile.authenticate('[username]', '[password]', mechanism='SCRAM-SHA-1')
+
+        questions = db.questions.find({ '_type': 'Core::Question' })
+        for question in questions:
+            text = question['title'] +' '+ question['content']
+            print(text)
+            prediction_interest = self.predict(text)
+            print('tagging '+ str(question['_id']) +' with '+ prediction_interest)
+            db.questions.update( { '_id': question['_id'] }, {"$set": { 'interest': prediction_interest }}, upsert=False )
+            print('')
