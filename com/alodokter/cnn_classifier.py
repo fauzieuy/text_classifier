@@ -4,6 +4,9 @@ import os
 from tensorflow.contrib import learn
 from com.alodokter import data_helpers
 
+import pymongo
+from pymongo import MongoClient
+
 # ===============================================================================================================
 tf.flags.DEFINE_string("checkpoint_dir", "runs/1501761743/checkpoints", "Checkpoint directory from training run")
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
