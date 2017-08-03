@@ -14,7 +14,12 @@ class TextClassifierCNN:
         l2_loss = tf.constant(0.0)
 
         # Embedding layer
-        with tf.device('/cpu:0'), tf.name_scope("embedding"):
+        # with tf.device('/cpu:0'), tf.name_scope("embedding"):
+        #     self.W = tf.Variable(tf.random_uniform([vocab_size, embedding_size], -1.0, 1.0), name="W")
+        #     self.embedded_chars = tf.nn.embedding_lookup(self.W, self.input_x)
+        #     self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)
+
+        with tf.device('/gpu:0'), tf.name_scope("embedding"):
             self.W = tf.Variable(tf.random_uniform([vocab_size, embedding_size], -1.0, 1.0), name="W")
             self.embedded_chars = tf.nn.embedding_lookup(self.W, self.input_x)
             self.embedded_chars_expanded = tf.expand_dims(self.embedded_chars, -1)
@@ -70,8 +75,11 @@ class TextClassifierCNN:
             self.scores = tf.nn.xw_plus_b(self.h_drop, W, b, name="scores")
             self.predictions = tf.argmax(self.scores, 1, name="predictions")
 
-        # CalculateMean cross-entropy loss
-        with tf.name_scope("loss"):
+        # # CalculateMean cross-entropy loss
+        # with tf.name_scope("loss"):
+        #     losses = tf.nn.softmax_cross_entropy_with_logits(logits=self.scores, labels=self.input_y)
+        #     self.loss = tf.reduce_mean(losses) + l2_reg_lambda * l2_loss
+        with tf.device('/gpu:0'), tf.name_scope("loss"):
             losses = tf.nn.softmax_cross_entropy_with_logits(logits=self.scores, labels=self.input_y)
             self.loss = tf.reduce_mean(losses) + l2_reg_lambda * l2_loss
 

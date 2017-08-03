@@ -66,7 +66,25 @@ def __build_data_frame(path, classification):
     data_frame = DataFrame(rows, index=index)
     return data_frame
 
-def __setup_one_hot_encoder_class(path):
+# def __setup_one_hot_encoder_class(path):
+#     print('setup_one_hot_encoder_class...')
+#     classification = []
+#     for root, dir_names, file_names in os.walk(path):
+#         for dir_name in dir_names:
+#             print('append dir_name: '+ dir_name)
+#             classification.append(dir_name)
+#
+#     # integer encoded
+#     global le, bin_enc
+#     le = LabelEncoder()
+#     int_enc = le.fit_transform(classification)
+#     int_enc = int_enc.reshape(len(int_enc), 1) # reshape to avoid DeprecationWarning
+#
+#     # binary encode
+#     bin_enc = OneHotEncoder(sparse=False)
+#     bin_enc.fit(int_enc)
+
+def setup_one_hot_encoder_class(path):
     print('setup_one_hot_encoder_class...')
     classification = []
     for root, dir_names, file_names in os.walk(path):
@@ -90,7 +108,7 @@ def __one_hot_encoder(classname):
     return bin_enc.transform(int_enc)
 
 def __prepare_data(path):
-    __setup_one_hot_encoder_class(path)
+    setup_one_hot_encoder_class(path)
     data = DataFrame({'text': [], 'class': []})
     for root, dir_names, file_names in os.walk(path):
         for dir_name in dir_names:
@@ -121,3 +139,6 @@ def batch_iter(data, batch_size, num_epochs, shuffle=True):
             start_index = batch_num * batch_size
             end_index = min((batch_num + 1) * batch_size, data_size)
             yield shuffled_data[start_index:end_index]
+
+def get_class_name(index):
+    return le.classes_[index]
