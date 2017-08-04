@@ -43,12 +43,17 @@ class TextClassifier:
                 # Get the placeholders from the graph by name
                 self.input_x = graph.get_operation_by_name("input_x").outputs[0]
                 self.dropout_keep_prob = graph.get_operation_by_name("dropout_keep_prob").outputs[0]
+                self.scores = graph.get_operation_by_name("output/scores").outputs[0]
                 self.predictions = graph.get_operation_by_name("output/predictions").outputs[0]
 
-    def predict(self, text):
+    def predict(self, text, confidence_level=0):
         x = np.array(list(self.vocab_processor.transform([data_helpers.clean_str(text)])))
-        output = self.sess.run(self.predictions, {self.input_x: x, self.dropout_keep_prob: 1.0})
-        return data_helpers.get_class_name(output[0])
+        logits = tf.nn.softmax(self.scores)
+        output, probability = self.sess.run([self.predictions, logits], {self.input_x: x, self.dropout_keep_prob: 1.0})
+        if probability[0][output[0]] >= confidence_level:
+            return data_helpers.get_class_name(output[0])
+        else:
+            return 'None'
 
     def tagging(self):
         client = MongoClient('[server ip]', 27017)
