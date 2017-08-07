@@ -14,6 +14,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.metrics import f1_score
+from sklearn.svm import SVC
 
 import pymongo
 from pymongo import MongoClient
@@ -41,12 +42,6 @@ class TextClassifier:
         Original taken from https://github.com/yoonkim/CNN_sentence/blob/master/process_data.py
         """
         string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)
-        string = re.sub(r"\'s", " \'s", string)
-        string = re.sub(r"\'ve", " \'ve", string)
-        string = re.sub(r"n\'t", " n\'t", string)
-        string = re.sub(r"\'re", " \'re", string)
-        string = re.sub(r"\'d", " \'d", string)
-        string = re.sub(r"\'ll", " \'ll", string)
         string = re.sub(r",", " ", string)
         string = re.sub(r"!", " ! ", string)
         string = re.sub(r"\(", " ( ", string)
@@ -158,7 +153,6 @@ class TextClassifier:
         db = client.alomobile
         client.alomobile.authenticate('[username]', '[password]', mechanism='SCRAM-SHA-1')
 
-        # questions = db.questions.find().limit( 100 )
         questions = db.questions.find({ '_type': 'Core::Question' })
         #questions = db.questions.find({ '_type': 'Core::Question', 'interest': { '$exists': False } })
         for question in questions:
