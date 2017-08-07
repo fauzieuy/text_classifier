@@ -3,8 +3,8 @@ import numpy as np
 import os
 import time
 import datetime
-from com.alodokter.cnn import data_helpers
-from com.alodokter.cnn.text_classifier_cnn import TextClassifierCNN
+from com.alodokter.rnn import data_helpers
+from com.alodokter.rnn.text_classifier_rnn import TextClassifierRNN
 from tensorflow.contrib import learn
 
 # Parameters
@@ -18,13 +18,11 @@ tf.flags.DEFINE_string("corpus_path", "corpus/interest/", "Data source for the n
 
 # Model Hyperparameters
 tf.flags.DEFINE_integer("embedding_dim", 128, "Dimensionality of character embedding (default: 128)")
-tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
-tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.05, "L2 regularization lambda (default: 0.0)")
 
 # Training parameters
-tf.flags.DEFINE_integer("batch_size", 1024, "Batch Size (default: 64)")
+tf.flags.DEFINE_integer("batch_size", 512, "Batch Size (default: 64)")
 tf.flags.DEFINE_integer("num_epochs", 200, "Number of training epochs (default: 200)")
 tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
@@ -44,10 +42,28 @@ print("")
 # Data Preparation
 # ==================================================
 # Load data
+# x_text is list of question
+# ['question-1', 'question-2',...,'question-n']
+# y is one-hot-encoding class
+# array([[ 0.,  0.,  1., ...,  0.,  0.,  0.],
+#        [ 0.,  0.,  0., ...,  0.,  0.,  0.],
+#        [ 0.,  0.,  0., ...,  0.,  0.,  0.],
+#        ...,
+#        [ 0.,  0.,  0., ...,  0.,  0.,  0.],
+#        [ 0.,  0.,  0., ...,  0.,  0.,  0.],
+#        [ 0.,  0.,  0., ...,  0.,  0.,  0.]])
 print("Loading data...")
 x_text, y = data_helpers.load_data_and_labels(FLAGS.corpus_path)
 
 # Build vocabulary
+# x is
+# array([[   1,    2,    1, ...,    0,    0,    0],
+#        [   5,    6,    7, ...,    0,    0,    0],
+#        [   1,  125,    2, ...,    0,    0,    0],
+#        ...,
+#        [ 252,  143,  250, ...,    0,    0,    0],
+#        [ 200,  201,    2, ...,    0,    0,    0],
+#        [6398,    2,  144, ...,    0,    0,    0]])
 max_document_length = max([len(x.split(" ")) for x in x_text])
 vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 x = np.array(list(vocab_processor.fit_transform(x_text)))
@@ -76,19 +92,17 @@ with tf.Graph().as_default():
     session_conf = tf.ConfigProto(allow_soft_placement=FLAGS.allow_soft_placement,log_device_placement=FLAGS.log_device_placement)
     sess = tf.Session(config=session_conf)
     with sess.as_default():
-        cnn = TextClassifierCNN(
+        rnn = TextClassifierRNN(
                     sequence_length=x_train.shape[1],
                     num_classes=y_train.shape[1],
                     vocab_size=len(vocab_processor.vocabulary_),
                     embedding_size=FLAGS.embedding_dim,
-                    filter_sizes=list(map(int, FLAGS.filter_sizes.split(","))),
-                    num_filters=FLAGS.num_filters,
                     l2_reg_lambda=FLAGS.l2_reg_lambda)
 
         # Define Training procedure
         global_step = tf.Variable(0, name="global_step", trainable=False)
         optimizer = tf.train.AdamOptimizer(1e-3)
-        grads_and_vars = optimizer.compute_gradients(cnn.loss)
+        grads_and_vars = optimizer.compute_gradients(rnn.loss)
         train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
 
         # Keep track of gradient values and sparsity (optional)
@@ -107,8 +121,8 @@ with tf.Graph().as_default():
         print("Writing to {}\n".format(out_dir))
 
         # Summaries for loss and accuracy
-        loss_summary = tf.summary.scalar("loss", cnn.loss)
-        acc_summary = tf.summary.scalar("accuracy", cnn.accuracy)
+        loss_summary = tf.summary.scalar("loss", rnn.loss)
+        acc_summary = tf.summary.scalar("accuracy", rnn.accuracy)
 
         # Train Summaries
         train_summary_op = tf.summary.merge([loss_summary, acc_summary, grad_summaries_merged])
@@ -138,12 +152,13 @@ with tf.Graph().as_default():
             A single training step
             """
             feed_dict = {
-                cnn.input_x: x_batch,
-                cnn.input_y: y_batch,
-                cnn.dropout_keep_prob: FLAGS.dropout_keep_prob
+                rnn.input_x: x_batch,
+                rnn.input_y: y_batch,
+                rnn.batch_size: len(x_batch),
+                rnn.dropout_keep_prob: FLAGS.dropout_keep_prob
             }
             _, step, summaries, loss, accuracy = sess.run(
-                                                    [train_op, global_step, train_summary_op, cnn.loss, cnn.accuracy],
+                                                    [train_op, global_step, train_summary_op, rnn.loss, rnn.accuracy],
                                                     feed_dict)
             time_str = datetime.datetime.now().isoformat()
             print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
@@ -154,12 +169,13 @@ with tf.Graph().as_default():
             Evaluates model on a dev set
             """
             feed_dict = {
-                cnn.input_x: x_batch,
-                cnn.input_y: y_batch,
-                cnn.dropout_keep_prob: 1.0
+                rnn.input_x: x_batch,
+                rnn.input_y: y_batch,
+                rnn.batch_size: len(x_batch),
+                rnn.dropout_keep_prob: FLAGS.dropout_keep_prob
             }
             step, summaries, loss, accuracy = sess.run(
-                                                [global_step, dev_summary_op, cnn.loss, cnn.accuracy],
+                                                [global_step, dev_summary_op, rnn.loss, rnn.accuracy],
                                                 feed_dict)
             time_str = datetime.datetime.now().isoformat()
             print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
