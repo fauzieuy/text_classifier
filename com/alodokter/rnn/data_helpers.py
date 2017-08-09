@@ -7,6 +7,7 @@ from collections import Counter
 from pandas import DataFrame
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.externals import joblib
 
 NEWLINE     = '\n'
 SKIP_FILES  = {'cmds'}
@@ -92,8 +93,12 @@ def __prepare_data(path):
 
     return data.reindex(np.random.permutation(data.index))
 
-def load_data_and_labels(path):
-    data = __prepare_data(path)
+def load_data_and_labels(path, load=True):
+    if load is True:
+        data = joblib.load('pickled/train_data.pkl')
+    else:
+        data = __prepare_data(path)
+        joblib.dump(data, 'pickled/train_data.pkl')
     return data['text'].tolist(), np.array(data['class'].tolist())
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):

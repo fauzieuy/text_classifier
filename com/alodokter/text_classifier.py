@@ -14,7 +14,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.metrics import f1_score
-from sklearn.svm import SVC
 
 import pymongo
 from pymongo import MongoClient
@@ -104,8 +103,8 @@ class TextClassifier:
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.data['text'].values, self.data['class'].values, test_size=0.4, random_state=5)
 
         # self.pipeline = Pipeline([('count_vectorizer',  CountVectorizer(ngram_range=(1,  2))), ('tfidf_transformer',  TfidfTransformer()), ('classifier',  MultinomialNB())])
-        self.pipeline = Pipeline([('count_vectorizer',  CountVectorizer()), ('classifier',  MultinomialNB())])
-        # self.pipeline = Pipeline([('vectorizer',  CountVectorizer()), ('classifier',  SVC(kernel='rbf'))])
+        # self.pipeline = Pipeline([('count_vectorizer',  CountVectorizer()), ('classifier',  MultinomialNB())])
+        self.pipeline = Pipeline([('count_vectorizer',  CountVectorizer()), ('tfidf_transformer',  TfidfTransformer()), ('classifier',  MultinomialNB())])
         self.pipeline.fit(self.X_train, self.y_train)
 
     def predict(self, text, n_samples=1, confidence_level=0):

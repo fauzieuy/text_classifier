@@ -54,7 +54,8 @@ def __build_data_frame(path, classification):
     rows  = []
     index = []
     for file_name, text in __read_files(path):
-        rows.append({'text': clean_str(text.strip()), 'class': __one_hot_encoder(classification).tolist()[0]})
+        # rows.append({'text': clean_str(text.strip()), 'class': __one_hot_encoder(classification).tolist()[0]})
+        rows.append({'text': text.strip(), 'class': __one_hot_encoder(classification).tolist()[0]})
         index.append(file_name)
 
     data_frame = DataFrame(rows, index=index)
@@ -93,7 +94,11 @@ def __prepare_data(path):
     return data.reindex(np.random.permutation(data.index))
 
 def load_data_and_labels(path):
-    data = __prepare_data(path)
+    if load is True:
+        data = joblib.load('pickled/train_data.pkl')
+    else:
+        data = __prepare_data(path)
+        joblib.dump(data, 'pickled/train_data.pkl')
     return data['text'].tolist(), np.array(data['class'].tolist())
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
