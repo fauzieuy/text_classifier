@@ -57,23 +57,36 @@ class TextClassifierCNN:
         with tf.name_scope("dropout"):
             self.h_drop = tf.nn.dropout(self.h_pool_flat, self.dropout_keep_prob)
 
-        # Final (unnormalized) scores and predictions
+        # # Final (unnormalized) scores and predictions
+        # with tf.name_scope("output"):
+        #     W = tf.get_variable(
+        #             "W",
+        #             shape=[num_filters_total, num_classes],
+        #             initializer=tf.contrib.layers.xavier_initializer())
+        #
+        #     b = tf.Variable(tf.constant(0.1, shape=[num_classes]), name="b")
+        #     l2_loss += tf.nn.l2_loss(W)
+        #     l2_loss += tf.nn.l2_loss(b)
+        #     self.scores = tf.nn.xw_plus_b(self.h_drop, W, b, name="scores")
+        #     self.predictions = tf.argmax(self.scores, 1, name="predictions")
         with tf.name_scope("output"):
-            W = tf.get_variable(
-                    "W",
-                    shape=[num_filters_total, num_classes],
-                    initializer=tf.contrib.layers.xavier_initializer())
-
-            b = tf.Variable(tf.constant(0.1, shape=[num_classes]), name="b")
-            l2_loss += tf.nn.l2_loss(W)
-            l2_loss += tf.nn.l2_loss(b)
-            self.scores = tf.nn.xw_plus_b(self.h_drop, W, b, name="scores")
+            # self.scores = tf.layers.dense(encoding, num_classes, activation=None, name="scores")
+            regularizer = tf.contrib.layers.l2_regularizer(scale=l2_reg_lambda)
+            self.scores = tf.contrib.layers.fully_connected(
+                                    self.h_drop,
+                                    num_classes,
+                                    weights_initializer = tf.contrib.layers.xavier_initializer(),
+                                    weights_regularizer = regularizer,
+                                    biases_regularizer = regularizer,
+                                    scope="scores")
             self.predictions = tf.argmax(self.scores, 1, name="predictions")
 
         # CalculateMean cross-entropy loss
         with tf.name_scope("loss"):
-            losses = tf.nn.softmax_cross_entropy_with_logits(logits=self.scores, labels=self.input_y)
-            self.loss = tf.reduce_mean(losses) + l2_reg_lambda * l2_loss
+            # losses = tf.nn.softmax_cross_entropy_with_logits(logits=self.scores, labels=self.input_y)
+            # self.loss = tf.reduce_mean(losses) + l2_reg_lambda * l2_loss
+            loss = tf.losses.softmax_cross_entropy(logits=self.scores, onehot_labels=self.input_y)
+            self.loss = loss + sum(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
 
         # Accuracy
         with tf.name_scope("accuracy"):

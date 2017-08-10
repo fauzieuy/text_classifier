@@ -21,7 +21,7 @@ tf.flags.DEFINE_float("l2_reg_lambda", 0.001, "L2 regularization lambda (default
 tf.flags.DEFINE_float("learning_rate", 0.001, "Learning Rate (default: 0.001)")
 
 # Training parameters
-tf.flags.DEFINE_integer("batch_size", 128, "Batch Size (default: 64)")
+tf.flags.DEFINE_integer("batch_size", 256, "Batch Size (default: 64)")
 tf.flags.DEFINE_integer("num_epochs", 200, "Number of training epochs (default: 200)")
 tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
@@ -85,7 +85,7 @@ vocab_size = len(vocab_processor.vocabulary_)
 # print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
 
 # cross-validation
-x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.1, random_state=5)
+x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=FLAGS.dev_sample_percentage, random_state=5)
 
 # Training
 # ==================================================
@@ -106,6 +106,9 @@ with tf.Graph().as_default():
 
         # Define Training procedure
         global_step = tf.Variable(0, name="global_step", trainable=False)
+        # # https://www.tensorflow.org/versions/r0.12/api_docs/python/train/decaying_the_learning_rate
+        # starter_learning_rate = FLAGS.learning_rate
+        # learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 1000, 0.96, staircase=True)
         optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate)
         grads_and_vars = optimizer.compute_gradients(rnn.loss)
         train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
@@ -152,9 +155,6 @@ with tf.Graph().as_default():
         # Initialize all variables
         sess.run(tf.global_variables_initializer())
 
-        def seq_len(batches):
-            return [len(batch) for batch in batches]
-
         def train_step(x_batch, y_batch):
             """
             A single training step
@@ -163,7 +163,6 @@ with tf.Graph().as_default():
                 rnn.input_x: x_batch,
                 rnn.input_y: y_batch,
                 rnn.batch_size: len(x_batch),
-                rnn.seq_len: seq_len(x_batch),
                 rnn.dropout_keep_prob: FLAGS.dropout_keep_prob
             }
             _, step, summaries, loss, accuracy = sess.run(
@@ -181,7 +180,6 @@ with tf.Graph().as_default():
                 rnn.input_x: x_batch,
                 rnn.input_y: y_batch,
                 rnn.batch_size: len(x_batch),
-                rnn.seq_len: seq_len(x_batch),
                 rnn.dropout_keep_prob: FLAGS.dropout_keep_prob
             }
             step, summaries, loss, accuracy = sess.run(
@@ -192,7 +190,7 @@ with tf.Graph().as_default():
             if writer:
                 writer.add_summary(summaries, step)
 
-        # Generate batches
+        # Generate batches and shuffle the data on every epoch
         batches = data_helpers.batch_iter(list(zip(x_train, y_train)), FLAGS.batch_size, FLAGS.num_epochs)
 
         # Training loop. For each batch...
