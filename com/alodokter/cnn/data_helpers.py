@@ -7,6 +7,7 @@ from collections import Counter
 from pandas import DataFrame
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.externals import joblib
 
 NEWLINE     = '\n'
 SKIP_FILES  = {'cmds'}
@@ -54,8 +55,7 @@ def __build_data_frame(path, classification):
     rows  = []
     index = []
     for file_name, text in __read_files(path):
-        # rows.append({'text': clean_str(text.strip()), 'class': __one_hot_encoder(classification).tolist()[0]})
-        rows.append({'text': text.strip(), 'class': __one_hot_encoder(classification).tolist()[0]})
+        rows.append({'text': clean_str(text.strip()), 'class': __one_hot_encoder(classification).tolist()[0]})
         index.append(file_name)
 
     data_frame = DataFrame(rows, index=index)
@@ -93,7 +93,7 @@ def __prepare_data(path):
 
     return data.reindex(np.random.permutation(data.index))
 
-def load_data_and_labels(path):
+def load_data_and_labels(path, load=True):
     if load is True:
         data = joblib.load('pickled/train_data.pkl')
     else:

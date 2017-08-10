@@ -15,9 +15,9 @@ tf.flags.DEFINE_float("dev_sample_percentage", .1, "Percentage of the training d
 tf.flags.DEFINE_string("corpus_path", "corpus/interest/", "Data source for the negative data.")
 
 # Model Hyperparameters
-tf.flags.DEFINE_integer("embedding_dim", 64, "Dimensionality of character embedding (default: 64)")
+tf.flags.DEFINE_integer("embedding_dim", 32, "Dimensionality of character embedding (default: 32)")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
-tf.flags.DEFINE_float("l2_reg_lambda", 0.1, "L2 regularization lambda (default: 0.0)")
+tf.flags.DEFINE_float("l2_reg_lambda", 0.001, "L2 regularization lambda (default: 0.0)")
 tf.flags.DEFINE_float("learning_rate", 0.001, "Learning Rate (default: 0.001)")
 
 # Training parameters

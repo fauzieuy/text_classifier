@@ -6,6 +6,7 @@ import datetime
 from com.alodokter.cnn import data_helpers
 from com.alodokter.cnn.text_classifier_cnn import TextClassifierCNN
 from tensorflow.contrib import learn
+from sklearn.model_selection import train_test_split
 
 # Parameters
 # ==================================================
@@ -17,7 +18,7 @@ tf.flags.DEFINE_float("dev_sample_percentage", .1, "Percentage of the training d
 tf.flags.DEFINE_string("corpus_path", "corpus/interest/", "Data source for the negative data.")
 
 # Model Hyperparameters
-tf.flags.DEFINE_integer("embedding_dim", 128, "Dimensionality of character embedding (default: 128)")
+tf.flags.DEFINE_integer("embedding_dim", 32, "Dimensionality of character embedding (default: 32)")
 tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
 tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
@@ -44,27 +45,50 @@ print("")
 # Data Preparation
 # ==================================================
 # Load data
+# x_text is list of question
+# ['question-1', 'question-2',...,'question-n']
+#
+# y is one-hot-encoding class
+# array([[ 0.,  0.,  1., ...,  0.,  0.,  0.],
+#        [ 0.,  0.,  0., ...,  0.,  0.,  0.],
+#        [ 0.,  0.,  0., ...,  0.,  0.,  0.],
+#        ...,
+#        [ 0.,  0.,  0., ...,  0.,  0.,  0.],
+#        [ 0.,  0.,  0., ...,  0.,  0.,  0.],
+#        [ 0.,  0.,  0., ...,  0.,  0.,  0.]])
 print("Loading data...")
 x_text, y = data_helpers.load_data_and_labels(FLAGS.corpus_path)
 
 # Build vocabulary
-max_document_length = max([len(x.split(" ")) for x in x_text])
+# x is
+# array([[   1,    2,    1, ...,    0,    0,    0],
+#        [   5,    6,    7, ...,    0,    0,    0],
+#        [   1,  125,    2, ...,    0,    0,    0],
+#        ...,
+#        [ 252,  143,  250, ...,    0,    0,    0],
+#        [ 200,  201,    2, ...,    0,    0,    0],
+#        [6398,    2,  144, ...,    0,    0,    0]])
+# max_document_length = max([len(x.split(' ')) for x in x_text])
+max_document_length = np.ceil(np.mean([len(x.split(' ')) for x in x_text])).astype(int)
 vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 x = np.array(list(vocab_processor.fit_transform(x_text)))
 
-# Randomly shuffle data
-np.random.seed(10)
-shuffle_indices = np.random.permutation(np.arange(len(y)))
-x_shuffled = x[shuffle_indices]
-y_shuffled = y[shuffle_indices]
+# # Randomly shuffle data
+# np.random.seed(10)
+# shuffle_indices = np.random.permutation(np.arange(len(y)))
+# x_shuffled = x[shuffle_indices]
+# y_shuffled = y[shuffle_indices]
+#
+# # Split train/test set
+# # TODO: This is very crude, should use cross-validation
+# dev_sample_index = -1 * int(FLAGS.dev_sample_percentage * float(len(y)))
+# x_train, x_dev = x_shuffled[:dev_sample_index], x_shuffled[dev_sample_index:]
+# y_train, y_dev = y_shuffled[:dev_sample_index], y_shuffled[dev_sample_index:]
+# print("Vocabulary Size: {:d}".format(len(vocab_processor.vocabulary_)))
+# print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
 
-# Split train/test set
-# TODO: This is very crude, should use cross-validation
-dev_sample_index = -1 * int(FLAGS.dev_sample_percentage * float(len(y)))
-x_train, x_dev = x_shuffled[:dev_sample_index], x_shuffled[dev_sample_index:]
-y_train, y_dev = y_shuffled[:dev_sample_index], y_shuffled[dev_sample_index:]
-print("Vocabulary Size: {:d}".format(len(vocab_processor.vocabulary_)))
-print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
+# cross-validation
+x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.1, random_state=5)
 
 # Training
 # ==================================================
