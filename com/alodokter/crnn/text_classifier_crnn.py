@@ -68,6 +68,7 @@ class TextClassifierCRNN:
                                     num_classes,
                                     weights_initializer = tf.contrib.layers.xavier_initializer(),
                                     weights_regularizer = regularizer,
+                                    biases_regularizer = regularizer,
                                     scope="scores")
             self.predictions = tf.argmax(self.scores, 1, name="predictions")
 

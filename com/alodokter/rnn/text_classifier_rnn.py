@@ -78,8 +78,6 @@ class TextClassifierRNN:
         # with tf.name_scope("loss"):
         #     loss = tf.losses.softmax_cross_entropy(logits=self.scores, onehot_labels=self.input_y)
         #     self.loss = loss + sum(tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES))
-        #     # losses = tf.nn.softmax_cross_entropy_with_logits(logits=self.scores, labels=self.input_y)
-        #     # self.loss = tf.reduce_mean(losses) + l2_reg_lambda * l2_loss
 
         # Accuracy
         with tf.name_scope("accuracy"):
