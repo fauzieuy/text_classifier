@@ -23,6 +23,7 @@ tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (d
 tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.5, "L2 regularization lambda (default: 0.0)")
+tf.flags.DEFINE_float("learning_rate", 0.01, "Learning Rate (default: 0.001)")
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 512, "Batch Size (default: 64)")
@@ -111,7 +112,10 @@ with tf.Graph().as_default():
 
         # Define Training procedure
         global_step = tf.Variable(0, name="global_step", trainable=False)
-        optimizer = tf.train.AdamOptimizer(1e-3)
+        # https://www.tensorflow.org/versions/r0.12/api_docs/python/train/decaying_the_learning_rate
+        starter_learning_rate = FLAGS.learning_rate
+        learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 1000, 0.96, staircase=True)
+        optimizer = tf.train.AdamOptimizer(learning_rate)
         grads_and_vars = optimizer.compute_gradients(cnn.loss)
         train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
 
