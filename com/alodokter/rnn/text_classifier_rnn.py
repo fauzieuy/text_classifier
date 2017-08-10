@@ -22,6 +22,7 @@ class TextClassifierRNN:
 
         # Embedding layer
         with tf.device('/gpu:0'), tf.name_scope("embedding"):
+            # [batch_size, sequence_length, embedding_size]
             embedded_words = tf.contrib.layers.embed_sequence(self.input_x, vocab_size=vocab_size, embed_dim=embedding_size)
             inputs_series = tf.unstack(embedded_words, axis=1)
 

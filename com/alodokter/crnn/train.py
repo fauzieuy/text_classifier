@@ -3,8 +3,8 @@ import numpy as np
 import os
 import time
 import datetime
-from com.alodokter.cnn import data_helpers
-from com.alodokter.cnn.text_classifier_cnn import TextClassifierCNN
+from com.alodokter.crnn import data_helpers
+from com.alodokter.crnn.text_classifier_crnn import TextClassifierCRNN
 from tensorflow.contrib import learn
 from sklearn.model_selection import train_test_split
 
@@ -21,12 +21,12 @@ tf.flags.DEFINE_string("corpus_path", "corpus/interest/", "Data source for the n
 tf.flags.DEFINE_integer("embedding_dim", 32, "Dimensionality of character embedding (default: 32)")
 tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
 tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
-tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
-tf.flags.DEFINE_float("l2_reg_lambda", 0.5, "L2 regularization lambda (default: 0.0)")
-tf.flags.DEFINE_float("learning_rate", 0.01, "Learning Rate (default: 0.001)")
+tf.flags.DEFINE_float("dropout_keep_prob", 0.2, "Dropout keep probability (default: 0.5)")
+tf.flags.DEFINE_float("l2_reg_lambda", 0.001, "L2 regularization lambda (default: 0.0)")
+tf.flags.DEFINE_float("learning_rate", 0.001, "Learning Rate (default: 0.001)")
 
 # Training parameters
-tf.flags.DEFINE_integer("batch_size", 512, "Batch Size (default: 64)")
+tf.flags.DEFINE_integer("batch_size", 128, "Batch Size (default: 64)")
 tf.flags.DEFINE_integer("num_epochs", 200, "Number of training epochs (default: 200)")
 tf.flags.DEFINE_integer("evaluate_every", 100, "Evaluate model on dev set after this many steps (default: 100)")
 tf.flags.DEFINE_integer("checkpoint_every", 100, "Save model after this many steps (default: 100)")
@@ -74,20 +74,6 @@ max_document_length = np.ceil(np.mean([len(x.split(' ')) for x in x_text])).asty
 vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
 x = np.array(list(vocab_processor.fit_transform(x_text)))
 
-# # Randomly shuffle data
-# np.random.seed(10)
-# shuffle_indices = np.random.permutation(np.arange(len(y)))
-# x_shuffled = x[shuffle_indices]
-# y_shuffled = y[shuffle_indices]
-#
-# # Split train/test set
-# # TODO: This is very crude, should use cross-validation
-# dev_sample_index = -1 * int(FLAGS.dev_sample_percentage * float(len(y)))
-# x_train, x_dev = x_shuffled[:dev_sample_index], x_shuffled[dev_sample_index:]
-# y_train, y_dev = y_shuffled[:dev_sample_index], y_shuffled[dev_sample_index:]
-# print("Vocabulary Size: {:d}".format(len(vocab_processor.vocabulary_)))
-# print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
-
 # cross-validation
 x_train, x_dev, y_train, y_dev = train_test_split(x, y, test_size=0.1, random_state=5)
 
@@ -101,7 +87,7 @@ with tf.Graph().as_default():
     session_conf = tf.ConfigProto(allow_soft_placement=FLAGS.allow_soft_placement,log_device_placement=FLAGS.log_device_placement)
     sess = tf.Session(config=session_conf)
     with sess.as_default():
-        cnn = TextClassifierCNN(
+        crnn = TextClassifierCRNN(
                     sequence_length=x_train.shape[1],
                     num_classes=y_train.shape[1],
                     vocab_size=len(vocab_processor.vocabulary_),
@@ -112,11 +98,11 @@ with tf.Graph().as_default():
 
         # Define Training procedure
         global_step = tf.Variable(0, name="global_step", trainable=False)
-        # https://www.tensorflow.org/versions/r0.12/api_docs/python/train/decaying_the_learning_rate
-        starter_learning_rate = FLAGS.learning_rate
-        learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 1000, 0.96, staircase=True)
-        optimizer = tf.train.AdamOptimizer(learning_rate)
-        grads_and_vars = optimizer.compute_gradients(cnn.loss)
+        # # https://www.tensorflow.org/versions/r0.12/api_docs/python/train/decaying_the_learning_rate
+        # starter_learning_rate = FLAGS.learning_rate
+        # learning_rate = tf.train.exponential_decay(starter_learning_rate, global_step, 1000, 0.96, staircase=True)
+        optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate)
+        grads_and_vars = optimizer.compute_gradients(crnn.loss)
         train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
 
         # Keep track of gradient values and sparsity (optional)
@@ -135,8 +121,8 @@ with tf.Graph().as_default():
         print("Writing to {}\n".format(out_dir))
 
         # Summaries for loss and accuracy
-        loss_summary = tf.summary.scalar("loss", cnn.loss)
-        acc_summary = tf.summary.scalar("accuracy", cnn.accuracy)
+        loss_summary = tf.summary.scalar("loss", crnn.loss)
+        acc_summary = tf.summary.scalar("accuracy", crnn.accuracy)
 
         # Train Summaries
         train_summary_op = tf.summary.merge([loss_summary, acc_summary, grad_summaries_merged])
@@ -166,12 +152,12 @@ with tf.Graph().as_default():
             A single training step
             """
             feed_dict = {
-                cnn.input_x: x_batch,
-                cnn.input_y: y_batch,
-                cnn.dropout_keep_prob: FLAGS.dropout_keep_prob
+                crnn.input_x: x_batch,
+                crnn.input_y: y_batch,
+                crnn.dropout_keep_prob: FLAGS.dropout_keep_prob
             }
             _, step, summaries, loss, accuracy = sess.run(
-                                                    [train_op, global_step, train_summary_op, cnn.loss, cnn.accuracy],
+                                                    [train_op, global_step, train_summary_op, crnn.loss, crnn.accuracy],
                                                     feed_dict)
             time_str = datetime.datetime.now().isoformat()
             print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
@@ -182,12 +168,12 @@ with tf.Graph().as_default():
             Evaluates model on a dev set
             """
             feed_dict = {
-                cnn.input_x: x_batch,
-                cnn.input_y: y_batch,
-                cnn.dropout_keep_prob: FLAGS.dropout_keep_prob
+                crnn.input_x: x_batch,
+                crnn.input_y: y_batch,
+                crnn.dropout_keep_prob: FLAGS.dropout_keep_prob
             }
             step, summaries, loss, accuracy = sess.run(
-                                                [global_step, dev_summary_op, cnn.loss, cnn.accuracy],
+                                                [global_step, dev_summary_op, crnn.loss, crnn.accuracy],
                                                 feed_dict)
             time_str = datetime.datetime.now().isoformat()
             print("{}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
