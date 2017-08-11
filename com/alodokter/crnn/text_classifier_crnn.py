@@ -4,7 +4,15 @@ import numpy as np
 tf.logging.set_verbosity(tf.logging.INFO)
 
 class TextClassifierCRNN:
-    def __init__(self, sequence_length, num_classes, vocab_size, embedding_size, filter_sizes, num_filters, l2_reg_lambda=0.0):
+    def __init__(self,
+        sequence_length,
+        num_classes,
+        vocab_size,
+        embedding_size,
+        filter_sizes,
+        num_filters,
+        num_units,
+        l2_reg_lambda=0.0):
         # Placeholders for input, output and dropout
         self.input_x = tf.placeholder(tf.int32, [None, sequence_length], name="input_x")
         self.input_y = tf.placeholder(tf.float32, [None, num_classes], name="input_y")
@@ -57,10 +65,10 @@ class TextClassifierCRNN:
             self.h_drop = tf.nn.dropout(self.h_pool_flat, self.dropout_keep_prob_cnn)
 
         # Create a Gated Recurrent Unit cell with hidden size of EMBEDDING_SIZE.
-        cell = tf.contrib.rnn.GRUCell(num_units=3)
+        cell = tf.contrib.rnn.GRUCell(num_units=num_units)
         cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=self.dropout_keep_prob_rnn)
 
-        inputs_series = tf.split(self.h_drop, num_or_size_splits=3, axis=1)
+        inputs_series = tf.split(self.h_drop, num_or_size_splits=num_units, axis=1)
         _, encoding = tf.contrib.rnn.static_rnn(cell, inputs_series, dtype=tf.float32)
         with tf.name_scope("output"):
             regularizer = tf.contrib.layers.l2_regularizer(scale=l2_reg_lambda)

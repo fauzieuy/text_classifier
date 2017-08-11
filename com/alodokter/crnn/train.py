@@ -21,10 +21,11 @@ tf.flags.DEFINE_string("corpus_path", "corpus/interest/", "Data source for the n
 tf.flags.DEFINE_integer("embedding_dim", 32, "Dimensionality of character embedding (default: 32)")
 tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (default: '3,4,5')")
 tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
-tf.flags.DEFINE_float("dropout_keep_prob_cnn", 0.5, "Dropout keep probability (default: 0.5)")
-tf.flags.DEFINE_float("dropout_keep_prob_rnn", 0.5, "Dropout keep probability (default: 0.5)")
+tf.flags.DEFINE_float("dropout_keep_prob_cnn", 5e-1, "Dropout keep probability (default: 0.5)")
+tf.flags.DEFINE_float("dropout_keep_prob_rnn", 5e-1, "Dropout keep probability (default: 0.5)")
 tf.flags.DEFINE_float("l2_reg_lambda", 1e-3, "L2 regularization lambda (default: 0.0)")
 tf.flags.DEFINE_float("learning_rate", 1e-3, "Learning Rate (default: 0.001)")
+tf.flags.DEFINE_integer("num_units", 24, "Number of hidden unit on RNN Cell (default: 24)")
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 128, "Batch Size (default: 64)")
@@ -95,6 +96,7 @@ with tf.Graph().as_default():
                     embedding_size=FLAGS.embedding_dim,
                     filter_sizes=list(map(int, FLAGS.filter_sizes.split(","))),
                     num_filters=FLAGS.num_filters,
+                    num_units=FLAGS.num_units,
                     l2_reg_lambda=FLAGS.l2_reg_lambda)
 
         # Define Training procedure
