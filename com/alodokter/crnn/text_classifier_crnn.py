@@ -8,7 +8,8 @@ class TextClassifierCRNN:
         # Placeholders for input, output and dropout
         self.input_x = tf.placeholder(tf.int32, [None, sequence_length], name="input_x")
         self.input_y = tf.placeholder(tf.float32, [None, num_classes], name="input_y")
-        self.dropout_keep_prob = tf.placeholder(tf.float32, name="dropout_keep_prob")
+        self.dropout_keep_prob_cnn = tf.placeholder(tf.float32, name="dropout_keep_prob_cnn")
+        self.dropout_keep_prob_rnn = tf.placeholder(tf.float32, name="dropout_keep_prob_rnn")
 
         # Embedding layer
         with tf.device('/gpu:0'), tf.name_scope("embedding"):
@@ -53,13 +54,13 @@ class TextClassifierCRNN:
 
         # Add dropout
         with tf.name_scope("dropout"):
-            self.h_drop = tf.nn.dropout(self.h_pool_flat, self.dropout_keep_prob)
+            self.h_drop = tf.nn.dropout(self.h_pool_flat, self.dropout_keep_prob_cnn)
 
         # Create a Gated Recurrent Unit cell with hidden size of EMBEDDING_SIZE.
-        cell = tf.contrib.rnn.GRUCell(num_units=24)
-        cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=self.dropout_keep_prob)
+        cell = tf.contrib.rnn.GRUCell(num_units=3)
+        cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=self.dropout_keep_prob_rnn)
 
-        inputs_series = tf.split(self.h_drop, num_or_size_splits=24, axis=1)
+        inputs_series = tf.split(self.h_drop, num_or_size_splits=3, axis=1)
         _, encoding = tf.contrib.rnn.static_rnn(cell, inputs_series, dtype=tf.float32)
         with tf.name_scope("output"):
             regularizer = tf.contrib.layers.l2_regularizer(scale=l2_reg_lambda)
