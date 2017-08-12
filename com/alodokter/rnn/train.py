@@ -180,7 +180,7 @@ with tf.Graph().as_default():
                 rnn.input_x: x_batch,
                 rnn.input_y: y_batch,
                 rnn.batch_size: len(x_batch),
-                rnn.dropout_keep_prob: FLAGS.dropout_keep_prob
+                rnn.dropout_keep_prob: 1.0
             }
             step, summaries, loss, accuracy = sess.run(
                                                 [global_step, dev_summary_op, rnn.loss, rnn.accuracy],

@@ -23,7 +23,7 @@ tf.flags.DEFINE_string("filter_sizes", "3,4,5", "Comma-separated filter sizes (d
 tf.flags.DEFINE_integer("num_filters", 128, "Number of filters per filter size (default: 128)")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.5, "L2 regularization lambda (default: 0.0)")
-tf.flags.DEFINE_float("learning_rate", 1e-3, "Learning Rate (default: 0.001)")
+tf.flags.DEFINE_float("learning_rate", 0.001, "Learning Rate (default: 0.001)")
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 512, "Batch Size (default: 64)")
@@ -184,7 +184,7 @@ with tf.Graph().as_default():
             feed_dict = {
                 cnn.input_x: x_batch,
                 cnn.input_y: y_batch,
-                cnn.dropout_keep_prob: FLAGS.dropout_keep_prob
+                cnn.dropout_keep_prob: 1.0
             }
             step, summaries, loss, accuracy = sess.run(
                                                 [global_step, dev_summary_op, cnn.loss, cnn.accuracy],
