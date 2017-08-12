@@ -26,18 +26,13 @@ class TextClassifierRNN:
             embedded_words = tf.contrib.layers.embed_sequence(self.input_x, vocab_size=vocab_size, embed_dim=embedding_size)
             inputs_series = tf.unstack(embedded_words, axis=1)
 
-        num_layers = 3
-        cells = []
-        for _ in range(num_layers):
-            # Create a Gated Recurrent Unit cell with hidden size of EMBEDDING_SIZE.
-            cell = tf.contrib.rnn.GRUCell(num_units=embedding_size)
-            cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=self.dropout_keep_prob)
-            cells.append(cell)
-        cell = tf.contrib.rnn.MultiRNNCell(cells)
+        # Create a Gated Recurrent Unit cell with hidden size of EMBEDDING_SIZE.
+        cell = tf.contrib.rnn.GRUCell(num_units=embedding_size)
+        cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=self.dropout_keep_prob)
 
         # Create an unrolled Recurrent Neural Networks to length of sequence_length
         # and passes inputs_series as inputs for each unit.
-        outputs, encoding = tf.contrib.rnn.static_rnn(
+        _, encoding = tf.contrib.rnn.static_rnn(
                                 cell,
                                 inputs_series,
                                 sequence_length=self.length(inputs_series),
@@ -54,8 +49,39 @@ class TextClassifierRNN:
                     initializer=tf.constant(0.1, shape=[num_classes]))
             l2_loss += tf.nn.l2_loss(W)
             l2_loss += tf.nn.l2_loss(b)
-            self.scores = tf.nn.xw_plus_b(outputs[-1], W, b, name="scores")
+            self.scores = tf.nn.xw_plus_b(encoding, W, b, name="scores")
             self.predictions = tf.argmax(self.scores, 1, name="predictions")
+
+        # num_layers = 3
+        # cells = []
+        # for _ in range(num_layers):
+        #     # Create a Gated Recurrent Unit cell with hidden size of EMBEDDING_SIZE.
+        #     cell = tf.contrib.rnn.GRUCell(num_units=embedding_size)
+        #     cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=self.dropout_keep_prob)
+        #     cells.append(cell)
+        # cell = tf.contrib.rnn.MultiRNNCell(cells)
+        #
+        # # Create an unrolled Recurrent Neural Networks to length of sequence_length
+        # # and passes inputs_series as inputs for each unit.
+        # outputs, encoding = tf.contrib.rnn.static_rnn(
+        #                         cell,
+        #                         inputs_series,
+        #                         sequence_length=self.length(inputs_series),
+        #                         dtype=tf.float32)
+        #
+        # # Final (unnormalized) scores and predictions
+        # with tf.name_scope("output"):
+        #     W = tf.get_variable(
+        #             "W",
+        #             shape=[embedding_size, num_classes],
+        #             initializer=tf.contrib.layers.xavier_initializer())
+        #     b = tf.get_variable(
+        #             "b",
+        #             initializer=tf.constant(0.1, shape=[num_classes]))
+        #     l2_loss += tf.nn.l2_loss(W)
+        #     l2_loss += tf.nn.l2_loss(b)
+        #     self.scores = tf.nn.xw_plus_b(outputs[-1], W, b, name="scores")
+        #     self.predictions = tf.argmax(self.scores, 1, name="predictions")
 
         # CalculateMean cross-entropy loss
         with tf.name_scope("loss"):
