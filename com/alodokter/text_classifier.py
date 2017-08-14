@@ -23,7 +23,7 @@ class TextClassifier:
     NEWLINE = '\n'
     WHITESPACE = ' '
     SKIP_FILES = {'cmds'}
-    CORPUS_PATH  = 'corpus/interest/'
+    CORPUS_PATH  = 'corpus/topics/'
 
     '" loading stopwords data "'
     def __init__(self):

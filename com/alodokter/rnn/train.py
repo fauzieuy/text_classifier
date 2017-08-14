@@ -3,8 +3,8 @@ import numpy as np
 import os
 import time
 import datetime
-from com.alodokter.rnn import data_helpers
-from com.alodokter.rnn.text_classifier_rnn import TextClassifierRNN
+import data_helpers
+from text_classifier_rnn import TextClassifierRNN
 from tensorflow.contrib import learn
 from sklearn.model_selection import train_test_split
 
@@ -12,13 +12,13 @@ from sklearn.model_selection import train_test_split
 # =========================================================================================================
 # Data loading params
 tf.flags.DEFINE_float("dev_sample_percentage", .1, "Percentage of the training data to use for validation")
-tf.flags.DEFINE_string("corpus_path", "corpus/interest/", "Data source for the negative data.")
+tf.flags.DEFINE_string("corpus_path", "corpus/topics/", "Data source for the negative data.")
 
 # Model Hyperparameters
 tf.flags.DEFINE_integer("embedding_dim", 32, "Dimensionality of character embedding (default: 32)")
 tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
-tf.flags.DEFINE_float("l2_reg_lambda", 0.001, "L2 regularization lambda (default: 0.0)")
-tf.flags.DEFINE_float("learning_rate", 0.001, "Learning Rate (default: 0.001)")
+tf.flags.DEFINE_float("l2_reg_lambda", 0.01, "L2 regularization lambda (default: 0.0)")
+tf.flags.DEFINE_float("learning_rate", 0.01, "Learning Rate (default: 0.001)")
 
 # Training parameters
 tf.flags.DEFINE_integer("batch_size", 256, "Batch Size (default: 64)")
@@ -53,7 +53,7 @@ print("")
 #        [ 0.,  0.,  0., ...,  0.,  0.,  0.],
 #        [ 0.,  0.,  0., ...,  0.,  0.,  0.]])
 print("Loading data...")
-x_text, y = data_helpers.load_data_and_labels(FLAGS.corpus_path)
+x_text, y = data_helpers.load_data_and_labels(FLAGS.corpus_path, 'topic', True)
 
 # Build vocabulary
 # x is
@@ -205,3 +205,6 @@ with tf.Graph().as_default():
             if current_step % FLAGS.checkpoint_every == 0:
                 path = saver.save(sess, checkpoint_prefix, global_step=current_step)
                 print("Saved model checkpoint to {}\n".format(path))
+
+# if __name__ == "__main__":
+#     main()

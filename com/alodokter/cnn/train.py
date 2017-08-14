@@ -3,19 +3,17 @@ import numpy as np
 import os
 import time
 import datetime
-from com.alodokter.cnn import data_helpers
-from com.alodokter.cnn.text_classifier_cnn import TextClassifierCNN
+import data_helpers
+from text_classifier_cnn import TextClassifierCNN
 from tensorflow.contrib import learn
 from sklearn.model_selection import train_test_split
 
 # Parameters
 # ==================================================
 
-CORPUS_PATH = 'corpus/interest/'
-
 # Data loading params
 tf.flags.DEFINE_float("dev_sample_percentage", .1, "Percentage of the training data to use for validation")
-tf.flags.DEFINE_string("corpus_path", "corpus/interest/", "Data source for the negative data.")
+tf.flags.DEFINE_string("corpus_path", "corpus/topics/", "Data source for the negative data.")
 
 # Model Hyperparameters
 tf.flags.DEFINE_integer("embedding_dim", 32, "Dimensionality of character embedding (default: 64)")
@@ -58,7 +56,7 @@ print("")
 #        [ 0.,  0.,  0., ...,  0.,  0.,  0.],
 #        [ 0.,  0.,  0., ...,  0.,  0.,  0.]])
 print("Loading data...")
-x_text, y = data_helpers.load_data_and_labels(FLAGS.corpus_path)
+x_text, y = data_helpers.load_data_and_labels(FLAGS.corpus_path, 'topic', True)
 
 # Build vocabulary
 # x is
