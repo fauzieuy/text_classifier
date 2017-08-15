@@ -96,12 +96,12 @@ def __prepare_data(path):
 
     return data.reindex(np.random.permutation(data.index))
 
-def load_data_and_labels(path, load=True):
+def load_data_and_labels(path, name, load=True):
     if load is True:
-        data = joblib.load('pickled/train_data.pkl')
+        data = joblib.load('pickled/'+ name +'.pkl')
     else:
         data = __prepare_data(path)
-        joblib.dump(data, 'pickled/train_data.pkl')
+        joblib.dump(data, 'pickled/'+ name +'.pkl')
     return data['text'].tolist(), np.array(data['class'].tolist())
 
 def batch_iter(data, batch_size, num_epochs, shuffle=True):
