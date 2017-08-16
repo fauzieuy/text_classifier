@@ -8,7 +8,7 @@ import pymongo
 from pymongo import MongoClient
 
 # ===============================================================================================================
-tf.flags.DEFINE_string("checkpoint_dir", "runs/1501761743/checkpoints", "Checkpoint directory from training run")
+tf.flags.DEFINE_string("checkpoint_dir", "runs/1502860030/checkpoints", "Checkpoint directory from training run")
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
 
@@ -22,7 +22,7 @@ print("")
 
 class TextClassifier:
     def __init__(self):
-        data_helpers.setup_one_hot_encoder_class('corpus/interest/')
+        data_helpers.setup_one_hot_encoder_class('corpus/topics/')
 
         # Map data into vocabulary
         vocab_path = os.path.join(FLAGS.checkpoint_dir, "..", "vocab")
@@ -40,6 +40,16 @@ class TextClassifier:
                 saver = tf.train.import_meta_graph("{}.meta".format(checkpoint_file))
                 saver.restore(self.sess, checkpoint_file)
 
+                # all_vars= tf.global_variables()
+                # def get_var(name):
+                #     for i in range(len(all_vars)):
+                #         print(all_vars[i])
+                #         if all_vars[i].name.startswith(name):
+                #             return all_vars[i]
+                #     return None
+                # W = get_var('output/scores/weights')
+                # b = get_var('output/scores/biases')
+
                 # Get the placeholders from the graph by name
                 self.input_x = graph.get_operation_by_name("input_x").outputs[0]
                 self.dropout_keep_prob = graph.get_operation_by_name("dropout_keep_prob").outputs[0]
@@ -49,7 +59,11 @@ class TextClassifier:
     def predict(self, text, confidence_level=0):
         x = np.array(list(self.vocab_processor.transform([data_helpers.clean_str(text)])))
         logits = tf.nn.softmax(self.scores)
-        output, probability = self.sess.run([self.predictions, logits], {self.input_x: x, self.dropout_keep_prob: 1.0})
+        feed = {
+                self.input_x: x,
+                self.dropout_keep_prob: 1.0
+                }
+        output, probability = self.sess.run([self.predictions, logits], feed)
         if probability[0][output[0]] >= confidence_level:
             return data_helpers.get_class_name(output[0])
         else:
